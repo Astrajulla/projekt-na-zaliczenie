@@ -1,11 +1,15 @@
 import random
+import sys
 from typing import List, Tuple
+import pygame
+from pygame.locals import *
+import pygame_textinput
+ 
 
-class Card:
+class Card(pygame.sprite.Sprite):
     """Reprezentacja karty"""
     RANKS = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
     SUITS = ['H', 'D', 'C', 'S']  # hearts, diamonds, clubs, spades
-    
     SUIT_NAMES = {
         'H': 'kier',
         'D': 'karo',
@@ -13,9 +17,15 @@ class Card:
         'S': 'pik'
     }
 
-    def __init__(self, rank: str, suit: str):
+    def __init__(self, rank: str, suit: str, x:int = 0, y:int = 0, alpha:float = 0.0):
         self.rank = rank
         self.suit = suit
+        self.path = f"textures/karty/{suit}-{rank}.png"
+        super().__init__() 
+        self.image = pygame.image.load(self.path)
+        self.image.set_alpha(int(alpha * 255))
+        self.rect = self.image.get_rect()
+        self.rect.center = (x, y)
 
     def __str__(self):
         return f"{self.rank}{Card.SUIT_NAMES[self.suit]}"
@@ -76,6 +86,7 @@ class Hand:
             aces -= 1
         
         return value
+
     
     def can_split(self):
         """Czy można zrobić split"""
@@ -121,20 +132,54 @@ class Player:
         hand2.add_card(card2)
 
         self.hands = [hand1, hand2]
+    def draw(self, displaysurf):
+        for hand in self.hands:
+            for card in hand.cards:
+                i = hand.cards.index(card)
+                card.image.set_alpha(255)
+                card.rect.center = (200+i*200, 500)
+                displaysurf.blit(card.image, card.rect)
+        pygame.display.update()
 
 class Dealer(Player):
     """Krupier"""
     def __init__(self):
         super().__init__("Krupier")
 
+    def draw1(self, displaysurf):
+        for hand in self.hands:
+            for card in hand.cards:
+                i = hand.cards.index(card)
+                card.image.set_alpha(255)
+                card.rect.center = (200+i*200, 200)
+                if hand.cards.index(card) != 0:
+                    card.image = pygame.image.load("textures/karty/rewers.png")
+                displaysurf.blit(card.image, card.rect)
+                
+        pygame.display.update()
+
+    def draw2(self, displaysurf):
+        for hand in self.hands:
+            for card in hand.cards:
+                i = hand.cards.index(card)
+                card.image.set_alpha(255)
+                card.rect.center = (200+i*200, 200)
+                if hand.cards.index(card) != 0:
+                    card.image = pygame.image.load(f'textures/karty/{card.suit}-{card.rank}.png')
+                displaysurf.blit(card.image, card.rect)
+                
+        pygame.display.update()
+
+
 class BlackjackGame:
     """Główna gra w blackjacka"""
     
-    def __init__(self, players: List[Player]):
+    def __init__(self, players: List[Player], displaysurf):
         self.players = players
         self.dealer = Dealer()
         self.deck = Deck()
         self.round_results = {}
+        self.displaysurf = displaysurf
     
     def display_rules(self):
         """Wyświetla zasady gry"""
@@ -234,14 +279,19 @@ class BlackjackGame:
             self.dealer.hand.add_card(self.deck.deal_card())
         
         self.display_game_state()
+
+        
         
         # Tury graczy
         for player in self.players:
+            self.displaysurf.fill((0, 128, 0))  # Zielone tło
+            self.dealer.draw1(displaysurf=self.displaysurf)
             self.player_turn(player)
+            pygame.display.update()
         
         # Tura krupiera
         self.dealer_turn()
-        
+        self.dealer.draw2(displaysurf=self.displaysurf)
         # Ocena wyników
         self.evaluate_results()
     
@@ -251,6 +301,8 @@ class BlackjackGame:
         
         while True:
             value = player.hand.get_value()
+            player.draw(displaysurf=self.displaysurf)
+            pygame.display.update()
             
             # Sprawdź czy gracz przebił
             if value > 21:
@@ -273,13 +325,29 @@ class BlackjackGame:
 
             options += ")"
 
-            action = input(f"{player.name}, wybierz akcję {options}: ").upper().strip()
+            #action = input(f"{player.name}, wybierz akcję {options}: ").upper().strip()
+
+            action = None
+            while action is None:
+                for event in pygame.event.get():
+                    if event.type == QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_h:
+                            action = 'H'
+                        elif event.key == pygame.K_s:
+                            action = 'S'
+                        elif event.key == pygame.K_p:
+                            action = 'P'
             
             if action == 'H':
                 card = self.deck.deal_card()
                 player.hand.add_card(card)
                 print(f"Dobrałeś: {card}")
                 print(f"Aktualne karty: {player.hand.cards_str()} | Suma: {player.hand.get_value()}")
+                player.draw(displaysurf=self.displaysurf)
+                pygame.display.update()
             elif action == 'S':
                 print(f"{player.name} PAUZUJE na {value}")
                 break
@@ -297,6 +365,8 @@ class BlackjackGame:
                     print(f"\nRĘKA {i}")
 
                     self.play_split_hand(player, hand)
+                    player.draw(displaysurf=self.displaysurf)
+                    pygame.display.update()
                 
                 break
             elif player.hand.can_split():
@@ -322,6 +392,8 @@ class BlackjackGame:
             card = self.deck.deal_card()
             self.dealer.hand.add_card(card)
             print(f"{self.dealer.name} dobiera kartę: {card}")
+            self.dealer.draw2(displaysurf=self.displaysurf)
+            pygame.display.update()
         
         self.display_game_state(show_dealer_cards=True)
     
@@ -425,10 +497,28 @@ class BlackjackGame:
         
         round_num = 1
         while True:
+
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+            
+
+            self.displaysurf.fill((0, 128, 0))  # Zielone tło
             self.play_round()
             
             # Pytaj czy grać dalej
-            choice = input(f"\nChcesz grać kolejną rundę? (T - TAK / N - NIE): ").upper().strip()
+            choice = None
+            while choice is None:
+                for event in pygame.event.get():
+                    if event.type == QUIT:
+                        pygame.quit()
+                        sys.exit()
+                    elif event.type == pygame.KEYDOWN:
+                        if event.key == pygame.K_t:
+                            choice = 'T'
+                        elif event.key == pygame.K_n:
+                            choice = 'N'
             if choice == 'N':
                 break
             round_num += 1
@@ -436,13 +526,28 @@ class BlackjackGame:
         self.display_final_scores()
         print("\n KONIEC GRY \n")
 
+
 def main():
+    pygame.init()
+    width, height = 1200, 800
+    displaysurf = pygame.display.set_mode((width, height))
+    pygame.display.set_caption("Blackjack")
+    displaysurf.fill((0, 128, 0))  # Zielone tło
+    font = pygame.font.SysFont(None, 48)
+    
+
+
     """Funkcja główna"""
     print("="*60)
     print("BLACKJACK - GRA DLA WIELU GRACZY")
     print("="*60)
     
-    # Pytaj o liczbę graczy
+   #karta = Card('A', 'S', x=120, y=600, alpha=1.0)
+   #displaysurf.blit(karta.image, karta.rect)
+#pygame.display.update()
+        
+
+
     while True:
         try:
             num_players = int(input("\nIle graczy będzie grać? (1-4): "))
@@ -461,8 +566,11 @@ def main():
             name = f"Gracz {i+1}"
         players.append(Player(name))
     
+   
+   
+
     # Uruchom grę
-    game = BlackjackGame(players)
+    game = BlackjackGame(players, displaysurf)
     game.play_game()
 
 if __name__ == "__main__":
