@@ -326,7 +326,7 @@ class BlackjackGame:
             # Sprawdź czy gracz przebił
             if value > 21:
                 print(f"{player.name} przebił 21! Przegrana!")
-                self.displaysurf.blit(pygame.image.load(f"textures/screens/przebicie.png"), (0, 300))
+                self.displaysurf.blit(pygame.image.load(f"textures/screens/przebicie.png"), (0, 100))
                 pygame.display.update()
                 pygame.time.wait(2000)  # Pauza na 2 sekundy
                 break
@@ -334,7 +334,7 @@ class BlackjackGame:
             # Sprawdź czy gracz ma dokładnie 21
             if value == 21:
                 print(f"{player.name} ma 21! Automatycznie PASUJE.")
-                self.displaysurf.blit(pygame.image.load(f"textures/screens/end_of_turn.png"), (0, 300))
+                self.displaysurf.blit(pygame.image.load(f"textures/screens/end_of_turn.png"), (0, 100))
                 pygame.display.update()
                 pygame.time.wait(2000)  # Pauza na 2 sekundy
                 break
@@ -375,7 +375,7 @@ class BlackjackGame:
                 pygame.display.update()
             elif action == 'S':
                 print(f"{player.name} PAUZUJE na {value}")
-                self.displaysurf.blit(pygame.image.load(f"textures/screens/end_of_turn.png"), (0, 300))
+                self.displaysurf.blit(pygame.image.load(f"textures/screens/end_of_turn.png"), (0, 100))
                 pygame.display.update()
                 pygame.time.wait(2000)  # Pauza na 2 sekundy
                 break
@@ -420,8 +420,10 @@ class BlackjackGame:
             card = self.deck.deal_card()
             self.dealer.hand.add_card(card)
             print(f"{self.dealer.name} dobiera kartę: {card}")
+            self.displaysurf.fill((0, 128, 0))  # Zielone tło
             self.dealer.draw2(displaysurf=self.displaysurf)
             pygame.display.update()
+            pygame.time.wait(3000)  # Pauza na 2 sekundy
         
         self.display_game_state(show_dealer_cards=True)
     
