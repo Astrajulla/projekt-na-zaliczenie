@@ -133,11 +133,12 @@ class Player:
 
         self.hands = [hand1, hand2]
     def draw(self, displaysurf):
+        displaysurf.blit(pygame.image.load(f"textures/players/player{self.name}.png"), (100, 450))
         for hand in self.hands:
             for card in hand.cards:
                 i = hand.cards.index(card)
                 card.image.set_alpha(255)
-                card.rect.center = (200+i*200, 500)
+                card.rect.center = (300+i*200, 500)
                 displaysurf.blit(card.image, card.rect)
         pygame.display.update()
 
@@ -147,11 +148,12 @@ class Dealer(Player):
         super().__init__("Krupier")
 
     def draw1(self, displaysurf):
+        displaysurf.blit(pygame.image.load(f"textures/players/dealer.png"), (100, 150))
         for hand in self.hands:
             for card in hand.cards:
                 i = hand.cards.index(card)
                 card.image.set_alpha(255)
-                card.rect.center = (200+i*200, 200)
+                card.rect.center = (300+i*200, 200)
                 if hand.cards.index(card) != 0:
                     card.image = pygame.image.load("textures/karty/rewers.png")
                 displaysurf.blit(card.image, card.rect)
@@ -159,11 +161,12 @@ class Dealer(Player):
         pygame.display.update()
 
     def draw2(self, displaysurf):
+        displaysurf.blit(pygame.image.load(f"textures/players/dealer.png"), (100, 150))
         for hand in self.hands:
             for card in hand.cards:
                 i = hand.cards.index(card)
                 card.image.set_alpha(255)
-                card.rect.center = (200+i*200, 200)
+                card.rect.center = (300+i*200, 200)
                 if hand.cards.index(card) != 0:
                     card.image = pygame.image.load(f'textures/karty/{card.suit}-{card.rank}.png')
                 displaysurf.blit(card.image, card.rect)
@@ -183,6 +186,20 @@ class BlackjackGame:
     
     def display_rules(self):
         """Wyświetla zasady gry"""
+
+        self.displaysurf.blit(pygame.image.load("textures/screens/rules.png"), (0,0))
+        pygame.display.update()
+
+        i = True
+        while i:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        i = False
+
         print("\n" + "="*60)
         print("BLACKJACK - ZASADY GRY")
         print("="*60)
@@ -213,6 +230,8 @@ class BlackjackGame:
    • P - SPLIT: Podziel rękę na dwie (jeśli masz parę)
 """)
         print("="*60 + "\n")
+
+
     
     def display_game_state(self, show_dealer_cards: bool = False):
         """Wyświetla stan gry"""
@@ -289,6 +308,7 @@ class BlackjackGame:
             self.player_turn(player)
             pygame.display.update()
         
+        self.displaysurf.fill((0, 128, 0))  # Zielone tło
         # Tura krupiera
         self.dealer_turn()
         self.dealer.draw2(displaysurf=self.displaysurf)
@@ -303,15 +323,20 @@ class BlackjackGame:
             value = player.hand.get_value()
             player.draw(displaysurf=self.displaysurf)
             pygame.display.update()
-            
             # Sprawdź czy gracz przebił
             if value > 21:
                 print(f"{player.name} przebił 21! Przegrana!")
+                self.displaysurf.blit(pygame.image.load(f"textures/screens/przebicie.png"), (0, 300))
+                pygame.display.update()
+                pygame.time.wait(2000)  # Pauza na 2 sekundy
                 break
             
             # Sprawdź czy gracz ma dokładnie 21
             if value == 21:
                 print(f"{player.name} ma 21! Automatycznie PASUJE.")
+                self.displaysurf.blit(pygame.image.load(f"textures/screens/end_of_turn.png"), (0, 300))
+                pygame.display.update()
+                pygame.time.wait(2000)  # Pauza na 2 sekundy
                 break
             
             self.display_game_state()
@@ -350,6 +375,9 @@ class BlackjackGame:
                 pygame.display.update()
             elif action == 'S':
                 print(f"{player.name} PAUZUJE na {value}")
+                self.displaysurf.blit(pygame.image.load(f"textures/screens/end_of_turn.png"), (0, 300))
+                pygame.display.update()
+                pygame.time.wait(2000)  # Pauza na 2 sekundy
                 break
             elif action == 'P' and player.hand.can_split():
                 player.split_hand()
@@ -476,6 +504,21 @@ class BlackjackGame:
                 print(f"   {result_data['result']} - {result_data['reason']}")
                 print(f"   Liczba wygranych: {player.points}")
 
+        self.displaysurf.blit(pygame.image.load(f"textures/screens/round_results.png"), (0, 0))
+        
+        for i in range(len(self.players)):
+            result_data = self.round_results[f"{self.players[i].name}_hand_1"]
+            self.displaysurf.blit(pygame.image.load(f"textures/players/player{self.players[i].name}.png"), ((200+((i+1)%2 *500), 200+((i//2)*250))))
+            if result_data['result'] == "WYGRANA":
+                self.displaysurf.blit(pygame.image.load("textures/places/round-win.png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+            elif result_data['result'] == "PRZEGRANA" and result_data['reason'] != "PRZEBICIE":
+                self.displaysurf.blit(pygame.image.load("textures/places/round_lose.png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+            elif result_data['result'] == "PRZEGRANA" and result_data['reason'] == "PRZEBICIE":
+                self.displaysurf.blit(pygame.image.load("textures/places/round-przebicie.png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+            elif result_data['result'] == "REMIS":
+                self.displaysurf.blit(pygame.image.load("textures/places/round_lose.png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+        pygame.display.update()
+
         print("\n" + "="*60)
     
     def display_final_scores(self):
@@ -483,11 +526,32 @@ class BlackjackGame:
         print("\n" + "="*60)
         print("PODSUMOWANIE PUNKTÓW")
         print("="*60)
-        
+        self.displaysurf.blit(pygame.image.load(f"textures/screens/game_results.png"), (0, 0))
         sorted_players = sorted(self.players, key=lambda p: p.points, reverse=True)
-        
+        for i in range(len(sorted_players)):
+            self.displaysurf.blit(pygame.image.load(f"textures/places/place{i+1}.png"), ((200+((i+1)%2 *500), 200+((i//2)*250))))
+            if i == 0:
+                self.displaysurf.blit(pygame.image.load("textures/players/player" + sorted_players[i].name + ".png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+            elif i ==1:
+                self.displaysurf.blit(pygame.image.load("textures/players/player" + sorted_players[i].name + ".png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+            elif i == 2:
+                self.displaysurf.blit(pygame.image.load("textures/players/player" + sorted_players[i].name + ".png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+            elif i == 3:
+                self.displaysurf.blit(pygame.image.load("textures/players/player" + sorted_players[i].name + ".png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+        pygame.display.update()
         for i, player in enumerate(sorted_players, 1):
             print(f"{i} MIEJSCE. {player.name}: {player.points} punktów")
+
+        action = None
+        while action is None:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    action = 'H'
+
+
         
         print("="*60)
     
@@ -525,6 +589,7 @@ class BlackjackGame:
         
         self.display_final_scores()
         print("\n KONIEC GRY \n")
+        
 
 
 def main():
@@ -532,10 +597,37 @@ def main():
     width, height = 1200, 800
     displaysurf = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Blackjack")
-    displaysurf.fill((0, 128, 0))  # Zielone tło
-    font = pygame.font.SysFont(None, 48)
-    
+    displaysurf.blit(pygame.image.load("textures/screens/start.png"), (0, 0))
+    pygame.display.update()
 
+    action = None
+    while action is None:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                action = 'H'
+                       
+    
+    displaysurf.blit(pygame.image.load("textures/screens/players.png"), (0, 0))
+    pygame.display.update()
+
+    num_players = None
+    while num_players is None:
+        for event in pygame.event.get():
+            if event.type == QUIT:
+                pygame.quit()
+                sys.exit()
+            elif event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_1 or event.key == pygame.K_KP1:
+                    num_players = 1
+                elif event.key == pygame.K_2 or event.key == pygame.K_KP2:
+                    num_players = 2
+                elif event.key == pygame.K_3 or event.key == pygame.K_KP3:
+                    num_players = 3
+                elif event.key == pygame.K_4 or event.key == pygame.K_KP4:
+                    num_players = 4
 
     """Funkcja główna"""
     print("="*60)
@@ -548,26 +640,52 @@ def main():
         
 
 
-    while True:
-        try:
-            num_players = int(input("\nIle graczy będzie grać? (1-4): "))
-            if 1 <= num_players <= 4:
-                break
-            else:
-                print("Podaj liczbę między 1 a 4")
-        except ValueError:
-            print("Podaj liczbę!")
+    #while True:
+        #try:
+            #num_players = int(input("\nIle graczy będzie grać? (1-4): "))
+            #if 1 <= num_players <= 4:
+                #break
+            #else:
+                #print("Podaj liczbę między 1 a 4")
+        #except ValueError:
+            #print("Podaj liczbę!")
     
     # Zbierz imiona graczy
     players = []
+    
+    
     for i in range(num_players):
-        name = input(f"Imię gracza {i+1}: ").strip()
+        name = None
+        displaysurf.blit(pygame.image.load(f"textures/screens/choice{i+1}.png"), (0, 0))
+        displaysurf.blit(pygame.image.load("textures/players/player1.png"), (300, 300))
+        displaysurf.blit(pygame.image.load("textures/players/player2.png"), (500, 300))
+        displaysurf.blit(pygame.image.load("textures/players/player3.png"), (700, 300))
+        displaysurf.blit(pygame.image.load("textures/players/player4.png"), (900, 300))
+        pygame.display.update()
+            
+        while name is None:
+            for event in pygame.event.get():
+                if event.type == QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_1 or event.key == pygame.K_KP1:
+                        name = '1'
+                    elif event.key == pygame.K_2 or event.key == pygame.K_KP2:
+                        name = '2'
+                    elif event.key == pygame.K_3 or event.key == pygame.K_KP3:
+                        name = '3'
+                    elif event.key == pygame.K_4 or event.key == pygame.K_KP4:
+                        name = '4'
+
+
+        #name = input(f"Imię gracza {i+1}: ").strip()
         if not name:
-            name = f"Gracz {i+1}"
+            name = 'twojastara'
         players.append(Player(name))
     
-   
-   
+    
+    
 
     # Uruchom grę
     game = BlackjackGame(players, displaysurf)
