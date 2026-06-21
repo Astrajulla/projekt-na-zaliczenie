@@ -3,7 +3,7 @@ import sys
 from typing import List, Tuple
 import pygame
 from pygame.locals import *
-import pygame_textinput
+#import pygame_textinput
  
 
 class Card(pygame.sprite.Sprite):
@@ -183,7 +183,42 @@ class BlackjackGame:
         self.deck = Deck()
         self.round_results = {}
         self.displaysurf = displaysurf
+
+        try:
+            self.sfx = {
+                'shuffle':   pygame.mixer.Sound("textures/music/shuffle.mp3"),
+                'stand':     pygame.mixer.Sound("textures/music/stand.mp3"),
+                'bust':      pygame.mixer.Sound("textures/music/bust.mp3"),
+                'blackjack': pygame.mixer.Sound("textures/music/blackjack.mp3"),
+                'victory':   pygame.mixer.Sound("textures/music/victory.mp3")
+            }
+            self.sfx_picks = [
+                pygame.mixer.Sound("textures/music/pick1.mp3"),
+                pygame.mixer.Sound("textures/music/pick2.mp3"),
+                pygame.mixer.Sound("textures/music/pick3.mp3")
+            ]
+            
+            for sound in self.sfx.values():
+                sound.set_volume(0.6)
+                
+            for sound in self.sfx_picks:
+                sound.set_volume(0.6)
+
+        except Exception as e:
+            print(f"Błąd ładowania SFX: {e}")
+            self.sfx = {}
+            self.sfx_picks = []
     
+    def play_sfx(self, name: str):
+        """Odtwarza nazwany dźwięk ze słownika, jeśli istnieje"""
+        if name in self.sfx and self.sfx[name]:
+            self.sfx[name].play()
+
+    def play_sfx_pick(self):
+        """Odtwarza losowy dźwięk dobierania"""
+        if self.sfx_picks:
+            random.choice(self.sfx_picks).play()
+
     def display_rules(self):
         """Wyświetla zasady gry"""
 
@@ -274,9 +309,13 @@ class BlackjackGame:
                 card = self.deck.deal_card()
                 hand.add_card(card)
 
+                self.play_sfx_pick()
+
                 print(f"Dobrałeś: {card}")
 
             elif action == 'S':
+                self.play_sfx('stand')
+                self.play_sfx('stand')
                 break
 
     def play_round(self):
@@ -319,38 +358,41 @@ class BlackjackGame:
         """Obsługuje turę gracza z możliwością wyboru"""
         print(f"\nTura {player.name}:")
         
+        # ZMIANA 1: Nowe wywołanie tasowania na start tury:
+        self.play_sfx('shuffle')
+        
         while True:
             value = player.hand.get_value()
             player.draw(displaysurf=self.displaysurf)
             pygame.display.update()
+            
             # Sprawdź czy gracz przebił
             if value > 21:
+                self.play_sfx('bust')   ### <--- 1. DŹWIĘK PRZEBICIA
+                
                 print(f"{player.name} przebił 21! Przegrana!")
                 self.displaysurf.blit(pygame.image.load(f"textures/screens/przebicie.png"), (0, 100))
                 pygame.display.update()
-                pygame.time.wait(2000)  # Pauza na 2 sekundy
+                pygame.time.wait(2000) 
                 break
             
             # Sprawdź czy gracz ma dokładnie 21
             if value == 21:
+                self.play_sfx('blackjack')   ### <--- 2. DŹWIĘK IDEALNEGO 21
+                
                 print(f"{player.name} ma 21! Automatycznie PASUJE.")
                 self.displaysurf.blit(pygame.image.load(f"textures/screens/end_of_turn.png"), (0, 100))
                 pygame.display.update()
-                pygame.time.wait(2000)  # Pauza na 2 sekundy
+                pygame.time.wait(2000) 
                 break
             
             self.display_game_state()
-            
             print(f"{player.name} - Twoje karty: {player.hand.cards_str()} | Suma: {value}")
 
             options = "(H - DOBIERZ / S - PASUJ"
-
             if player.hand.can_split():
                 options += " / P - SPLIT"
-
             options += ")"
-
-            #action = input(f"{player.name}, wybierz akcję {options}: ").upper().strip()
 
             action = None
             while action is None:
@@ -369,15 +411,20 @@ class BlackjackGame:
             if action == 'H':
                 card = self.deck.deal_card()
                 player.hand.add_card(card)
+                self.play_sfx_pick()  # (To dodaliśmy w poprzedniej wiadomości)
                 print(f"Dobrałeś: {card}")
                 print(f"Aktualne karty: {player.hand.cards_str()} | Suma: {player.hand.get_value()}")
                 player.draw(displaysurf=self.displaysurf)
                 pygame.display.update()
+                
             elif action == 'S':
+                self.play_sfx('stand')
+                self.play_sfx('stand')
+                
                 print(f"{player.name} PAUZUJE na {value}")
                 self.displaysurf.blit(pygame.image.load(f"textures/screens/end_of_turn.png"), (0, 100))
                 pygame.display.update()
-                pygame.time.wait(2000)  # Pauza na 2 sekundy
+                pygame.time.wait(2000) 
                 break
             elif action == 'P' and player.hand.can_split():
                 player.split_hand()
@@ -586,6 +633,11 @@ class BlackjackGame:
                         elif event.key == pygame.K_n:
                             choice = 'N'
             if choice == 'N':
+
+                pygame.mixer.music.fadeout(1000)
+
+                self.play_sfx('victory')
+
                 break
             round_num += 1
         
@@ -596,9 +648,20 @@ class BlackjackGame:
 
 def main():
     pygame.init()
+    
+    pygame.mixer.init()
+
     width, height = 1200, 800
     displaysurf = pygame.display.set_mode((width, height))
     pygame.display.set_caption("Blackjack")
+
+    try:
+        pygame.mixer.music.load("textures/music/muza.mp3")
+        pygame.mixer.music.set_volume(0.1)
+        pygame.mixer.music.play(-1)
+    except Exception as e:
+        print(f"Nie udało się załadować muzyki w tle: {e}")
+
     displaysurf.blit(pygame.image.load("textures/screens/start.png"), (0, 0))
     pygame.display.update()
 
@@ -610,8 +673,7 @@ def main():
                 sys.exit()
             elif event.type == pygame.KEYDOWN:
                 action = 'H'
-                       
-    
+                        
     displaysurf.blit(pygame.image.load("textures/screens/players.png"), (0, 0))
     pygame.display.update()
 
