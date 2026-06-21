@@ -342,7 +342,7 @@ class BlackjackGame:
         
         # Tury graczy
         for player in self.players:
-            self.displaysurf.fill((0, 128, 0))  # Zielone tło
+            self.displaysurf.blit(pygame.image.load("textures/screens/main-game.png"), (0,0))  # main menu
             self.dealer.draw1(displaysurf=self.displaysurf)
             self.player_turn(player)
             pygame.display.update()
@@ -407,6 +407,12 @@ class BlackjackGame:
                             action = 'S'
                         elif event.key == pygame.K_p:
                             action = 'P'
+                    elif event.type == pygame.MOUSEBUTTONDOWN:
+                        if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                            action = 'H'
+                        elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
+                            action = 'S'
+                        
             
             if action == 'H':
                 card = self.deck.deal_card()
@@ -557,15 +563,15 @@ class BlackjackGame:
         
         for i in range(len(self.players)):
             result_data = self.round_results[f"{self.players[i].name}_hand_1"]
-            self.displaysurf.blit(pygame.image.load(f"textures/players/player{self.players[i].name}.png"), ((200+((i+1)%2 *500), 200+((i//2)*250))))
+            self.displaysurf.blit(pygame.image.load(f"textures/players/player{self.players[i].name}.png"), ((200+((i)%2 *500), 200+((i//2)*250))))
             if result_data['result'] == "WYGRANA":
-                self.displaysurf.blit(pygame.image.load("textures/places/round-win.png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+                self.displaysurf.blit(pygame.image.load("textures/places/round-win.png"), ((400+((i)%2 *500), 200+((i//2)*250))))
             elif result_data['result'] == "PRZEGRANA" and result_data['reason'] != "PRZEBICIE":
-                self.displaysurf.blit(pygame.image.load("textures/places/round_lose.png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+                self.displaysurf.blit(pygame.image.load("textures/places/round_lose.png"), ((400+((i)%2 *500), 200+((i//2)*250))))
             elif result_data['result'] == "PRZEGRANA" and result_data['reason'] == "PRZEBICIE":
-                self.displaysurf.blit(pygame.image.load("textures/places/round-przebicie.png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+                self.displaysurf.blit(pygame.image.load("textures/places/round-przebicie.png"), ((400+((i)%2 *500), 200+((i//2)*250))))
             elif result_data['result'] == "REMIS":
-                self.displaysurf.blit(pygame.image.load("textures/places/round_lose.png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+                self.displaysurf.blit(pygame.image.load("textures/places/round_lose.png"), ((400+((i)%2 *500), 200+((i//2)*250))))
         pygame.display.update()
 
         print("\n" + "="*60)
@@ -578,15 +584,32 @@ class BlackjackGame:
         self.displaysurf.blit(pygame.image.load(f"textures/screens/game_results.png"), (0, 0))
         sorted_players = sorted(self.players, key=lambda p: p.points, reverse=True)
         for i in range(len(sorted_players)):
-            self.displaysurf.blit(pygame.image.load(f"textures/places/place{i+1}.png"), ((200+((i+1)%2 *500), 200+((i//2)*250))))
+            self.displaysurf.blit(pygame.image.load(f"textures/places/place{i+1}.png"), ((200+((i)%2 *500), 200+((i//2)*250))))
             if i == 0:
-                self.displaysurf.blit(pygame.image.load("textures/players/player" + sorted_players[i].name + ".png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+                self.displaysurf.blit(pygame.image.load("textures/players/player" + sorted_players[i].name + ".png"), ((400+((i)%2 *500 -100), 200+((i//2)*250))))
+                if sorted_players[i].points <10:
+                    self.displaysurf.blit(pygame.image.load("textures/places/place" + str(sorted_players[i].points) + ".png"), ((400+((i)%2 *500 +50), 200+((i//2)*250))))
+                else:
+                    self.displaysurf.blit(pygame.image.load("textures/places/place10" + ".png"), ((400+((i)%2 *500 +50), 200+((i//2)*250))))
+
             elif i ==1:
-                self.displaysurf.blit(pygame.image.load("textures/players/player" + sorted_players[i].name + ".png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+                self.displaysurf.blit(pygame.image.load("textures/players/player" + sorted_players[i].name + ".png"), ((400+((i)%2 *500-100), 200+((i//2)*250))))
+                if sorted_players[i].points <10:
+                    self.displaysurf.blit(pygame.image.load("textures/places/place" + str(sorted_players[i].points) + ".png"), ((400+((i)%2 *500 +50), 200+((i//2)*250))))
+                else:
+                    self.displaysurf.blit(pygame.image.load("textures/places/place10" + ".png"), ((400+((i)%2 *500 +50), 200+((i//2)*250))))
             elif i == 2:
-                self.displaysurf.blit(pygame.image.load("textures/players/player" + sorted_players[i].name + ".png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+                self.displaysurf.blit(pygame.image.load("textures/players/player" + sorted_players[i].name + ".png"), ((400+((i)%2 *500-100), 200+((i//2)*250))))
+                if sorted_players[i].points <10:
+                    self.displaysurf.blit(pygame.image.load("textures/places/place" + str(sorted_players[i].points) + ".png"), ((400+((i)%2 *500 +50), 200+((i//2)*250))))
+                else:
+                    self.displaysurf.blit(pygame.image.load("textures/places/place10" + ".png"), ((400+((i)%2 *500 +50), 200+((i//2)*250))))
             elif i == 3:
-                self.displaysurf.blit(pygame.image.load("textures/players/player" + sorted_players[i].name + ".png"), ((400+((i+1)%2 *500), 200+((i//2)*250))))
+                self.displaysurf.blit(pygame.image.load("textures/players/player" + sorted_players[i].name + ".png"), ((400+((i)%2 *500-100), 200+((i//2)*250))))
+                if sorted_players[i].points <10:
+                    self.displaysurf.blit(pygame.image.load("textures/places/place" + str(sorted_players[i].points) + ".png"), ((400+((i)%2 *500 +50), 200+((i//2)*250))))
+                else:
+                    self.displaysurf.blit(pygame.image.load("textures/places/place10" + ".png"), ((400+((i)%2 *500 +50), 200+((i//2)*250))))
         pygame.display.update()
         for i, player in enumerate(sorted_players, 1):
             print(f"{i} MIEJSCE. {player.name}: {player.points} punktów")
@@ -597,9 +620,7 @@ class BlackjackGame:
                 if event.type == QUIT:
                     pygame.quit()
                     sys.exit()
-                elif event.type == pygame.KEYDOWN:
-                    action = 'H'
-
+                
 
         
         print("="*60)
@@ -716,15 +737,22 @@ def main():
     
     # Zbierz imiona graczy
     players = []
-    
+    do_we_have_1 = False
+    do_we_have_2 = False
+    do_we_have_3 = False
+    do_we_have_4 = False
     
     for i in range(num_players):
         name = None
         displaysurf.blit(pygame.image.load(f"textures/screens/choice{i+1}.png"), (0, 0))
-        displaysurf.blit(pygame.image.load("textures/players/player1.png"), (300, 300))
-        displaysurf.blit(pygame.image.load("textures/players/player2.png"), (500, 300))
-        displaysurf.blit(pygame.image.load("textures/players/player3.png"), (700, 300))
-        displaysurf.blit(pygame.image.load("textures/players/player4.png"), (900, 300))
+        if do_we_have_1 == False:
+            displaysurf.blit(pygame.image.load("textures/players/player1.png"), (300, 300))
+        if do_we_have_2 == False:
+            displaysurf.blit(pygame.image.load("textures/players/player2.png"), (500, 300))
+        if do_we_have_3 == False:
+            displaysurf.blit(pygame.image.load("textures/players/player3.png"), (700, 300))
+        if do_we_have_4 == False:
+            displaysurf.blit(pygame.image.load("textures/players/player4.png"), (900, 300))
         pygame.display.update()
             
         while name is None:
@@ -733,14 +761,22 @@ def main():
                     pygame.quit()
                     sys.exit()
                 elif event.type == pygame.KEYDOWN:
-                    if event.key == pygame.K_1 or event.key == pygame.K_KP1:
-                        name = '1'
-                    elif event.key == pygame.K_2 or event.key == pygame.K_KP2:
-                        name = '2'
-                    elif event.key == pygame.K_3 or event.key == pygame.K_KP3:
-                        name = '3'
-                    elif event.key == pygame.K_4 or event.key == pygame.K_KP4:
-                        name = '4'
+                    if do_we_have_1 == False:
+                        if event.key == pygame.K_1 or event.key == pygame.K_KP1:
+                            name = '1'
+                            do_we_have_1 = True
+                    if do_we_have_2 == False:
+                        if event.key == pygame.K_2 or event.key == pygame.K_KP2:
+                            name = '2'
+                            do_we_have_2 = True
+                    if do_we_have_3 == False:
+                        if event.key == pygame.K_3 or event.key == pygame.K_KP3:
+                            name = '3'
+                            do_we_have_3 = True
+                    if do_we_have_4 == False:
+                        if event.key == pygame.K_4 or event.key == pygame.K_KP4:
+                            name = '4'
+                            do_we_have_4 = True
 
 
         #name = input(f"Imię gracza {i+1}: ").strip()
