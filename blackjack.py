@@ -3,7 +3,8 @@ import sys
 from typing import List, Tuple
 import pygame
 from pygame.locals import *
-#import pygame_textinput
+
+#code by Julia Rekuc, Igor Paluch and Kornelia Lesniewska
  
 
 class Card(pygame.sprite.Sprite):
@@ -584,7 +585,7 @@ class BlackjackGame:
         self.displaysurf.blit(pygame.image.load(f"textures/screens/game_results.png"), (0, 0))
         sorted_players = sorted(self.players, key=lambda p: p.points, reverse=True)
         for i in range(len(sorted_players)):
-            self.displaysurf.blit(pygame.image.load(f"textures/places/place{i+1}.png"), ((200+((i)%2 *500), 200+((i//2)*250))))
+            self.displaysurf.blit(pygame.image.load(f"textures/places/places{i+1}.png"), ((200+((i)%2 *500), 200+((i//2)*250))))
             if i == 0:
                 self.displaysurf.blit(pygame.image.load("textures/players/player" + sorted_players[i].name + ".png"), ((400+((i)%2 *500 -100), 200+((i//2)*250))))
                 if sorted_players[i].points <10:
